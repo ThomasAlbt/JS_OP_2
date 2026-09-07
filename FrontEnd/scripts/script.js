@@ -57,9 +57,15 @@ const displayCategories = (categoriesList, projectList) => {
 
 const filterProjects = (categoryId = 0) => {
     const gallery = portfolio.querySelector(".gallery");
-    
-    for (const item of gallery.children) {
-        item.dataset.categoryId == categoryId ? item.style.display = 'block' : item.style.display = 'none';
+
+    if (categoryId == 0) {
+        for (const item of gallery.children) {
+            item.style.display = 'block'
+        }
+    } else {
+        for (const item of gallery.children) {
+            item.dataset.categoryId == categoryId ? item.style.display = 'block' : item.style.display = 'none';
+        }
     }
 }
 
