@@ -25,7 +25,7 @@ const displayProject = (projectList) => {
     projectList.forEach(element => {
         gallery.innerHTML += 
         `
-            <figure>
+            <figure data-category-id=${element.categoryId}>
                 <img src=${element.imageUrl} alt=${element.title}>
                 <figcaption>${element.title}<figcatpion/>
             <figure/>
@@ -53,23 +53,19 @@ const displayCategories = (categoriesList, projectList) => {
 
         filters.append(button);
     });
-
-    filterProjects(projectList);
 }
 
-const filterProjects = (projectList) => {
-    const filters = portfolio.querySelector(".filters");
+const filterProjects = (categoryId = 0) => {
+    const gallery = portfolio.querySelector(".gallery");
+    
+    for (const item of gallery.children) {
+        item.dataset.categoryId == categoryId ? item.style.display = 'block' : item.style.display = 'none';
+    }
+}
 
-    filters.addEventListener("click", (event) => {
-        const categoryId = Number(event.target.dataset.categoryId);
-
-        const filteredProjects = categoryId === 0
-            ? projectList
-            : projectList.filter((project) => {
-                return project.categoryId === categoryId
-            });
-            
-            displayProject(filteredProjects);
+const clickListener = () => {
+    document.addEventListener("click", (e) => {
+        filterProjects(e.target.dataset.categoryId)
     })
 }
 
@@ -79,6 +75,7 @@ const main = async () => {
 
     displayProject(projectList);
     displayCategories(categoriesList, projectList);
+    clickListener();
 }
 
 main()
