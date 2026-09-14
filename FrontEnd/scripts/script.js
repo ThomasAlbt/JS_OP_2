@@ -2,42 +2,41 @@ const api = "http://localhost:5678/api/"
 
 const fetchApi = async (url, endpoint) => {
     try {
-        const response = await fetch(url + endpoint)
+        const response = await fetch(url + endpoint);
 
         if (!response.ok) {
             throw new Error(`Response status: ${response.status} / Endpoint = ${endpoint}`);
         }
 
-        const results = await response.json()
+        const results = await response.json();
         return(results)
     } catch (error) {
-        console.error(error.message)
+        console.error(error.message);
     }
 }
 
 const portfolio = document.getElementById("portfolio");
 
-const displayProject = (projectList) => {
+const displayProjects = (projectList) => {
     const gallery = portfolio.getElementsByClassName("gallery")[0];
-
-    gallery.replaceChildren()
+    const template = document.getElementById("project-template");
 
     projectList.forEach(element => {
-        gallery.innerHTML += 
-        `
-            <figure data-category-id=${element.categoryId}>
-                <img src=${element.imageUrl} alt=${element.title}>
-                <figcaption>${element.title}<figcatpion/>
-            <figure/>
-        `
+        const figure = template.content.firstElementChild.cloneNode(true);
+        const image = figure.querySelector("img");
+
+        figure.dataset.categoryId = element.categoryId;
+        image.src = element.imageUrl;
+        image.alt = element.title;
+        figure.querySelector("figcaption").textContent = element.title;
+
+        gallery.append(figure);
     });
 }
 
-const displayCategories = (categoriesList, projectList) => {
+const displayCategories = (categoriesList) => {
     const filters = portfolio.querySelector(".filters");
     const template = document.getElementById("category-template");
-
-    filters.replaceChildren();
 
     const showAll = template.content.firstElementChild.cloneNode(true);
     showAll.textContent = "Tous";
@@ -55,12 +54,13 @@ const displayCategories = (categoriesList, projectList) => {
     });
 }
 
+// add class instead of display
 const filterProjects = (categoryId = 0) => {
     const gallery = portfolio.querySelector(".gallery");
 
     if (categoryId == 0) {
         for (const item of gallery.children) {
-            item.style.display = 'block'
+            item.style.display = 'block';
         }
     } else {
         for (const item of gallery.children) {
@@ -71,17 +71,102 @@ const filterProjects = (categoryId = 0) => {
 
 const clickListener = () => {
     document.addEventListener("click", (e) => {
-        filterProjects(e.target.dataset.categoryId)
-    })
+        const target = e.target;
+        const action = target.dataset.action;
+
+
+        switch (action) {
+            case "filter":
+                e.preventDefault();
+                filterProjects(target.dataset.categoryId);
+                return;
+            case "login":
+                e.preventDefault();
+                const inputs = formatLoginInput(target);
+                postLogin(inputs, api);
+                return;
+        }
+    });
 }
 
-const main = async () => {
-    const projectList = await fetchApi(api, "works");
-    const categoriesList = await fetchApi(api, "categories");
+// LOGIN
 
-    displayProject(projectList);
-    displayCategories(categoriesList, projectList);
+const formatLoginInput = (target) => {
+    const form = target.closest("form");
+    const formData = new FormData(form);
+
+    const loginInfos = {
+        email: formData.get("email"),
+        password: formData.get("password")
+    };
+
+    if (!loginInfos.email || !loginInfos.password) {
+        console.log("No inputs");
+        return;
+    }
+
+    return(loginInfos);
+}
+
+const postLogin = async (loginInputs, api) => {
+    try {
+        const response = await fetch(api + 'users/login', {
+            method: "POST",
+            headers: {
+                "Content-type": "application/json"
+            },
+            body: JSON.stringify(loginInputs)
+        })
+
+        const result = await response.json();
+
+        // using the function isJwt to verify if the token is right, i will make a way to have an endpoint giving you a wrong one
+
+        if (!isJwt(result.token)) {
+            console.error("Invalid JWT");
+            return;
+        }
+
+        if (!response.ok) {
+            throw new Error(`Response status: ${response.status} / Endpoint = login`);
+        }
+
+        localStorage.setItem("token", result.token);
+        localStorage.setItem("userId", result.userId);
+
+        console.log("yay login");
+    } catch (error) {
+        console.error("Login error: " + error)
+    }
+}
+
+const isJwt = (token) => {
+    // token is always a string
+    if (typeof token !== "string") {
+        return false;
+    }
+
+    // token is always in 3 parts seprated by a dot, so spliting it should revealed a 3 length array
+    const parts = token.split(".");
+
+    if (parts.length !== 3) {
+        return false;
+    }
+
+    // Apparently there is a way to verify it by decoding it with base64, nee to do more research on how and how can i implemente it
+
+    return true;
+};
+
+const main = async () => {
+    if (portfolio) {
+        const projectList = await fetchApi(api, "works");
+        const categoriesList = await fetchApi(api, "categories");
+
+        displayProjects(projectList);
+        displayCategories(categoriesList);
+    }
     clickListener();
 }
 
-main()
+main();
