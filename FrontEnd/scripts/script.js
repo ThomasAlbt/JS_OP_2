@@ -1,4 +1,6 @@
-const api = "http://localhost:5678/api/"
+const api = "http://localhost:5678/api/";
+
+const portfolio = document.getElementById("portfolio");
 
 const fetchApi = async (url, endpoint) => {
     try {
@@ -14,8 +16,6 @@ const fetchApi = async (url, endpoint) => {
         console.error(error.message);
     }
 }
-
-const portfolio = document.getElementById("portfolio");
 
 const displayProjects = (projectList) => {
     const gallery = portfolio.getElementsByClassName("gallery")[0];
@@ -54,17 +54,16 @@ const displayCategories = (categoriesList) => {
     });
 }
 
-// add class instead of display
 const filterProjects = (categoryId = 0) => {
     const gallery = portfolio.querySelector(".gallery");
 
     if (categoryId == 0) {
         for (const item of gallery.children) {
-            item.style.display = 'block';
+            item.classList.remove("hidden");
         }
     } else {
         for (const item of gallery.children) {
-            item.dataset.categoryId == categoryId ? item.style.display = 'block' : item.style.display = 'none';
+            item.dataset.categoryId == categoryId ? item.classList.remove("hidden") : item.classList.add("hidden");
         }
     }
 }
@@ -85,6 +84,9 @@ const clickListener = () => {
                 const inputs = formatLoginInput(target);
                 postLogin(inputs, api);
                 return;
+            case "logout":
+                e.preventDefault();
+                lougout();
         }
     });
 }
@@ -120,21 +122,23 @@ const postLogin = async (loginInputs, api) => {
 
         const result = await response.json();
 
+        if (!response.ok) {
+            window.alert("Email or password incorrect.");
+            return;
+        }
+
         // using the function isJwt to verify if the token is right, i will make a way to have an endpoint giving you a wrong one
+        // it has to be after checking if the response is ok, otherwise faulty login infos will always result in invalid JWT
 
         if (!isJwt(result.token)) {
             console.error("Invalid JWT");
             return;
         }
 
-        if (!response.ok) {
-            throw new Error(`Response status: ${response.status} / Endpoint = login`);
-        }
-
         localStorage.setItem("token", result.token);
         localStorage.setItem("userId", result.userId);
 
-        console.log("yay login");
+        window.location.replace("./index.html");
     } catch (error) {
         console.error("Login error: " + error)
     }
@@ -158,6 +162,28 @@ const isJwt = (token) => {
     return true;
 };
 
+// LOGOUT
+
+const displayLogin = () => {
+    const logout = document.getElementById("logout");
+    const login = document.getElementById("login");
+
+    if (localStorage.getItem("token")) {
+        logout.classList.remove("hidden");
+        login.classList.add("hidden");
+    } else {
+        login.classList.remove("hidden");
+        logout.classList.add("hidden");
+    }
+}
+
+const lougout = () => {
+    localStorage.clear("userId");
+    localStorage.clear("token");
+
+    window.location.replace("./index.html");
+}
+
 const main = async () => {
     if (portfolio) {
         const projectList = await fetchApi(api, "works");
@@ -165,7 +191,10 @@ const main = async () => {
 
         displayProjects(projectList);
         displayCategories(categoriesList);
+
+        displayLogin();
     }
+
     clickListener();
 }
 
