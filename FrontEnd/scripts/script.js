@@ -1,6 +1,7 @@
 const api = "http://localhost:5678/api/";
 
 const portfolio = document.getElementById("portfolio");
+const login = document.getElementById("password");
 
 const fetchApi = async (url, endpoint) => {
     try {
@@ -73,25 +74,33 @@ const clickListener = () => {
         const target = e.target;
         const action = target.dataset.action;
 
+        const modal = document.getElementById("edition-modal");
 
         switch (action) {
             case "filter":
-                e.preventDefault();
                 filterProjects(target.dataset.categoryId);
                 return;
-            case "login":
-                e.preventDefault();
-                const inputs = formatLoginInput(target);
-                postLogin(inputs, api);
-                return;
             case "logout":
-                e.preventDefault();
                 lougout();
+            case "open-modal":
+                modal.showModal();
+                return;
+            case "close-modal":
+                modal.close();
+                return;
         }
     });
 }
 
 // LOGIN
+
+const inputSubmit = () => {
+    document.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const inputs = formatLoginInput(e.target);
+        postLogin(inputs, api);
+    })
+}
 
 const formatLoginInput = (target) => {
     const form = target.closest("form");
@@ -184,6 +193,37 @@ const lougout = () => {
     window.location.replace("./index.html");
 }
 
+// EDITION
+
+const displayEdition = () => {
+    const banner = document.getElementById("banner");
+    const open = document.getElementById("show-modal");
+
+    const filtercontainer = document.getElementsByClassName("filters")[0];
+
+    if (localStorage.getItem("token")) {
+        banner.classList.remove("hidden");
+        open.classList.remove("hidden");
+        filtercontainer.classList.add("hidden");
+    }
+}
+
+const listProjectModal = (projectList) => {
+    const template = document.getElementById("delete-project-template");
+    const list = document.getElementById("delete-project-list");
+
+    projectList.forEach(element => {
+        const form = template.content.firstElementChild.cloneNode(true);
+        const image = form.querySelector("img");
+
+        form.dataset.id = element.id;
+        image.src = element.imageUrl;
+        image.alt = element.title;
+
+        list.append(form);
+    });
+}
+
 const main = async () => {
     if (portfolio) {
         const projectList = await fetchApi(api, "works");
@@ -193,6 +233,11 @@ const main = async () => {
         displayCategories(categoriesList);
 
         displayLogin();
+        displayEdition();
+
+        listProjectModal(projectList);
+    } else {
+        inputSubmit();
     }
 
     clickListener();

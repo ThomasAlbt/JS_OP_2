@@ -12,6 +12,7 @@
 </head>
 <body>
 <header>
+	<div class="hidden" id="banner">Edition mode</div>
 	<h1>Sophie Bluel <span>Architecte d'intérieur</span></h1>
 	<nav>
 		<ul>
@@ -37,8 +38,35 @@
 	</section>
 	<section id="portfolio">
 		<h2>Mes Projets</h2>
+		<button id="show-modal" data-action="open-modal" class="hidden">show modal</button>
 		<div class="filters"></div>
 		<div class="gallery"></div>
+
+		<dialog id="edition-modal">
+			<div class="gallery-modal">
+				<button data-action="close-modal">close</button>
+				<h3>Gallery photos</h3>
+				<div id="delete-project-list"></div>
+
+				<template id="delete-project-template">
+					<form action="delete-work" method="post">
+						<img>
+						<button type="submit">delete</button>
+					</form>
+				</template>
+
+				<button id="add">Ajouter une photo</button>
+			</div>
+			<div class="upload-modal hidden">
+				<button data-action="close-modal">close</button>
+				<h3>Ajout photo</h3>
+				<form action="upload" method="post">
+					<input type="file" name="picture" id="picture">
+					<input type="text" name="title" id="title">
+					<input type="text" name="description" id="description">
+				</form>
+			</div>
+		</dialog>
 
 		<template id="project-template">
 			<figure>
