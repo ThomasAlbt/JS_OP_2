@@ -181,20 +181,28 @@ li:hover {
 #contact label, .login-form label {
 	margin: 2em 0 1em 0;
 }
-#contact textarea, .login-form textarea {
+#contact textarea, .login-form textarea,
+.upload-modal form > input[type="text"],
+.upload-modal form > select {
 	border: none;
 	box-shadow: 0px 4px 14px rgba(0, 0, 0, 0.09);
 }
 
-input[type="submit"]{
+input[type="submit"],
+.gallery-modal > button[data-action="show-upload"],
+.upload-modal form > button[type="submit"] {
 	font-family: 'Syne';
 	font-weight: 700;
 	color: white;
 	background-color: #1D6154;
+	display: block;
 	margin : 2em auto ;
 	width: 180px;
+	padding: 10px 20px;
+	border: 0;
 	text-align: center;
 	border-radius: 60px ;
+	cursor: pointer;
 }
 
 footer nav ul {
@@ -202,23 +210,6 @@ footer nav ul {
 	justify-content: flex-end;
 	margin: 2em
 }
-
-.upload-file-wrapper {
-	display: inline-block;
-	padding: 2em;
-}
-
-#image-preview {
-	display: block;
-	max-width: 100%;
-	max-height: 250px;
-	margin: 1em auto;
-	object-fit: contain;
-}
-#image-preview.hidden {
-	display: none;
-}
-
 
 /* LOGIN PAGE */
 
@@ -292,6 +283,7 @@ footer nav ul {
 .gallery-modal,
 .upload-modal {
     position: relative;
+	padding: 55px 100px 25px;
 }
 
 .gallery-modal > button[data-action="close-modal"],
@@ -348,22 +340,6 @@ footer nav ul {
     cursor: pointer;
 }
 
-.gallery-modal > button[data-action="show-upload"],
-.upload-modal form > button[type="submit"] {
-    display: block;
-    padding: 10px 20px;
-    border: 0;
-    border-radius: 60px;
-    cursor: pointer;
-	font-family: 'Syne';
-	color: white;
-	background-color: #1D6154;
-	margin : 2em auto ;
-	width: 180px;
-	text-align: center;
-	border-radius: 60px ;
-}
-
 .upload-modal form {
     display: flex;
     flex-direction: column;
@@ -377,9 +353,6 @@ footer nav ul {
 .upload-modal form > select {
     height: 40px;
     padding: 0 10px;
-    border: 0;
-    background: #fff;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.09);
 }
 
 .upload-file-wrapper {
@@ -426,14 +399,6 @@ footer nav ul {
 	font-size: 10px;
 }
 
-.upload-file-label {
-	margin: 18px 0 8px;
-}
-
-.upload-file-wrapper:has(#image-preview:not(.hidden)) {
-	min-height: 110px;
-}
-
 .upload-file-wrapper:has(#image-preview:not(.hidden)) > i,
 .upload-file-wrapper:has(#image-preview:not(.hidden)) > label,
 .upload-file-wrapper:has(#image-preview:not(.hidden)) > p {
@@ -458,14 +423,6 @@ footer nav ul {
 
 .upload-file-wrapper #image-preview.hidden {
 	display: none;
-}
-
-.gallery-modal, .upload-modal {
-	padding: 55px 100px 25px;
-}
-
-#delete-project-list {
-	grid-template-columns: repeat(5, 1fr);
 }
 
 /* had to put it at the bottom to remove conflict with  filters parent */
