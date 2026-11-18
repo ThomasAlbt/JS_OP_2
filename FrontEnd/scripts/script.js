@@ -2,6 +2,7 @@ const api = "http://localhost:5678/api/";
 
 const portfolio = document.getElementById("portfolio");
 const login = document.getElementById("password");
+let imagePreviewUrl;
 
 const fetchApi = async (url, endpoint) => {
     try {
@@ -22,14 +23,15 @@ const displayProjects = (projectList) => {
     const gallery = portfolio.getElementsByClassName("gallery")[0];
     const template = document.getElementById("project-template");
 
-    projectList.forEach(element => {
+    projectList.forEach(project => {
         const figure = template.content.firstElementChild.cloneNode(true);
         const image = figure.querySelector("img");
 
-        figure.dataset.categoryId = element.categoryId;
-        image.src = element.imageUrl;
-        image.alt = element.title;
-        figure.querySelector("figcaption").textContent = element.title;
+        figure.dataset.id = project.id;
+        figure.dataset.categoryId = project.categoryId;
+        image.src = project.imageUrl;
+        image.alt = project.title;
+        figure.querySelector("figcaption").textContent = project.title;
 
         gallery.append(figure);
     });
@@ -58,6 +60,10 @@ const displayCategories = (categoriesList) => {
 const filterProjects = (categoryId = 0) => {
     const gallery = portfolio.querySelector(".gallery");
 
+    for (const button of portfolio.querySelectorAll(".filter-button")) {
+        button.classList.toggle("active", button.dataset.categoryId == categoryId);
+    }
+
     if (categoryId == 0) {
         for (const item of gallery.children) {
             item.classList.remove("hidden");
@@ -69,12 +75,17 @@ const filterProjects = (categoryId = 0) => {
     }
 }
 
-const clickListener = () => {
+const clickListener = (categoriesList = []) => {
     document.addEventListener("click", (e) => {
         const target = e.target;
         const action = target.dataset.action;
 
         const modal = document.getElementById("edition-modal");
+
+        if (target === modal) {
+            modal.close();
+            return;
+        }
 
         switch (action) {
             case "filter":
@@ -83,41 +94,60 @@ const clickListener = () => {
             case "logout":
                 lougout();
             case "open-modal":
+                renderModalView("gallery");
                 modal.showModal();
+                listProjectModal();
+                return;
+            case "show-upload":
+                renderModalView("upload", categoriesList);
+                uploadCategories(categoriesList);
+                return;
+            case "show-gallery":
+                renderModalView("gallery");
+                listProjectModal();
                 return;
             case "close-modal":
                 modal.close();
                 return;
         }
     });
-}
+};
+
+// Doing the same as i did for click inputs, since there will be multiple submit in one javascript file
+
+const submitListener = () => {
+    document.addEventListener("submit", (e) => {
+        e.preventDefault();
+
+        const form = e.target;
+        const action = form.getAttribute("action");
+
+        switch (action) {
+            case "login":
+                handleLogin(form);
+                return;
+            case "delete-work":
+                deleteWork(form);
+                return;
+            case "upload":
+                addWork(form);
+                return;
+        }
+    });
+};
 
 // LOGIN
 
-const inputSubmit = () => {
-    document.addEventListener("submit", (e) => {
-        e.preventDefault();
-        const inputs = formatLoginInput(e.target);
-        postLogin(inputs, api);
-    })
-}
-
-const formatLoginInput = (target) => {
-    const form = target.closest("form");
+const handleLogin = (form) => {
     const formData = new FormData(form);
 
-    const loginInfos = {
+    const loginInputs = {
         email: formData.get("email"),
         password: formData.get("password")
     };
 
-    if (!loginInfos.email || !loginInfos.password) {
-        console.log("No inputs");
-        return;
-    }
-
-    return(loginInfos);
-}
+    postLogin(loginInputs, api);
+};
 
 const postLogin = async (loginInputs, api) => {
     try {
@@ -127,7 +157,7 @@ const postLogin = async (loginInputs, api) => {
                 "Content-type": "application/json"
             },
             body: JSON.stringify(loginInputs)
-        })
+        });
 
         const result = await response.json();
 
@@ -171,7 +201,7 @@ const isJwt = (token) => {
     return true;
 };
 
-// LOGOUT
+// Login/Logout display in header logic
 
 const displayLogin = () => {
     const logout = document.getElementById("logout");
@@ -185,6 +215,8 @@ const displayLogin = () => {
         logout.classList.add("hidden");
     }
 }
+
+// LOGOUT
 
 const lougout = () => {
     localStorage.clear("userId");
@@ -208,39 +240,187 @@ const displayEdition = () => {
     }
 }
 
-const listProjectModal = (projectList) => {
+// simple innerhtml for the modal, not a fan of calling other function inside of it, i will chnage that
+const renderModalView = (view) => {
+    const modal = document.getElementById("edition-modal");
+
+    if (view === "gallery") {
+        modal.innerHTML = `
+            <div class="gallery-modal">
+                <button type="button" data-action="close-modal"><i class="fa-solid fa-xmark"></i></button>
+                <h3>Gallery photos</h3>
+                <div id="delete-project-list"></div>
+
+                <template id="delete-project-template">
+                    <form action="delete-work" method="post">
+                        <button type="submit"><i class="fa-solid fa-trash-can"></i></button>
+                        <img>
+                    </form>
+                </template>
+
+                <button type="button" data-action="show-upload">
+                    Ajouter une photo
+                </button>
+            </div>
+        `;
+        return;
+    }
+
+    if (view === "upload") {
+        modal.innerHTML = `
+            <div class="upload-modal">
+                <button type="button" data-action="show-gallery">Retour</button>
+                <button type="button" data-action="close-modal">Fermer</button>
+                <h3>Ajout photo</h3>
+                <form action="upload" method="post">
+                    <div class="upload-file-wrapper">
+                        <label for="image">Photo</label>
+                        <input type="file" name="image" id="image" accept="image/*" required>
+                    </div>
+                    <img id="image-preview" class="hidden" alt="Image preview">
+                    <label for="title">Titre</label>
+                    <input type="text" name="title" id="title" required>
+                    <label for="category">Catégorie</label>
+                    <select name="category" id="category" required></select>
+                    <button type="submit">Valider</button>
+                </form>
+            </div>
+        `;
+        return;
+    }
+};
+
+const listProjectModal = () => {
     const template = document.getElementById("delete-project-template");
     const list = document.getElementById("delete-project-list");
+    const figures = portfolio.querySelectorAll(".gallery figure");
 
-    projectList.forEach(element => {
+    figures.forEach(figure => {
         const form = template.content.firstElementChild.cloneNode(true);
         const image = form.querySelector("img");
 
-        form.dataset.id = element.id;
-        image.src = element.imageUrl;
-        image.alt = element.title;
+        form.dataset.id = figure.dataset.id;
+        image.src = figure.querySelector("img").src;
+        image.alt = figure.querySelector("figcaption").textContent;
 
         list.append(form);
     });
+};
+
+// DELETE/UPLOAD WORK
+
+const deleteWork = async (form) => {
+    const id = form.dataset.id;
+
+    try {
+        const response = await fetch(api + `works/${id}`, {
+            method: "Delete",
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+
+        if (!response.ok) {
+            window.alert("delete failed");
+            return;
+        }
+
+        // id in queriSelector
+        portfolio.querySelectorAll(".gallery figure").forEach(figure => {
+            if (figure.dataset.id === id) {
+                figure.remove();
+            }
+        });
+
+        form.remove();
+    } catch (error) {
+        console.error('Delete failed:', error);
+    }
+
 }
 
+// Simple port image to the api, maybe i need to make more check to see if its really an image
+const addWork = async (form) => {
+    const formData = new FormData(form);
+
+    try {
+        const response = await fetch(api + "works", {
+            method: "POST",
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`
+            },
+            body: formData
+        });
+
+        if (!response.ok) {
+            window.alert("Add failed");
+            return;
+        }
+
+        const project = await response.json();
+
+        //will just fetch the api again for now
+        displayProjects([project]);
+    } catch (error) {
+        console.error("Add failed:", error);
+    }
+};
+
+// preview the image you upload in a img, when a change occur in the document, I check if the id of the input is an image and if it is create a temporary url to put in the src
+const setupImagePreview = () => {
+    document.addEventListener("change", (e) => {
+        const input = e.target;
+
+        if (input.id !== "image") return;
+
+        const preview = document.getElementById("image-preview");
+        const file = input.files[0];
+
+        if (!file) {
+            preview.classList.add("hidden");
+            return;
+        }
+
+        preview.src = URL.createObjectURL(file);
+        preview.classList.remove("hidden");
+    });
+};
+
+const uploadCategories = (categoriesList) => {
+    const selectCategories = document.getElementById("category");
+
+    // Option(text, value = empty because its a placeholder, defaultSelected, selected = selected now)
+    const placeholder = new Option("", "", true, true);
+    placeholder.disabled = true;
+    selectCategories.replaceChildren(placeholder);
+
+    categoriesList.forEach(category => {
+        const option = new Option(category.name, category.id);
+        selectCategories.append(option);
+    });
+};
+
+
 const main = async () => {
+    let categoriesList = [];
+
     if (portfolio) {
         const projectList = await fetchApi(api, "works");
-        const categoriesList = await fetchApi(api, "categories");
+        categoriesList = await fetchApi(api, "categories");
 
         displayProjects(projectList);
         displayCategories(categoriesList);
 
         displayLogin();
         displayEdition();
-
-        listProjectModal(projectList);
-    } else {
-        inputSubmit();
     }
 
-    clickListener();
-}
+    submitListener();
+    setupImagePreview();
+    clickListener(categoriesList);
+};
 
-main();
+// add onload event
+window.addEventListener("load", () => {
+    main();
+});
