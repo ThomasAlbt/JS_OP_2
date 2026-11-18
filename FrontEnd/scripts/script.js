@@ -269,15 +269,18 @@ const renderModalView = (view) => {
     if (view === "upload") {
         modal.innerHTML = `
             <div class="upload-modal">
-                <button type="button" data-action="show-gallery">Retour</button>
-                <button type="button" data-action="close-modal">Fermer</button>
+                <button type="button" data-action="show-gallery" aria-label="Retour à la galerie"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i></button>
+                <button type="button" data-action="close-modal" aria-label="Fermer"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
                 <h3>Ajout photo</h3>
                 <form action="upload" method="post">
+                    <label class="upload-file-label" for="image">Photo</label>
                     <div class="upload-file-wrapper">
-                        <label for="image">Photo</label>
+                        <i class="fa-regular fa-image" aria-hidden="true"></i>
+                        <label for="image">Ajouter une photo</label>
                         <input type="file" name="image" id="image" accept="image/*" required>
+                        <p>jpg, png : 4mo max</p>
+                        <img id="image-preview" class="hidden" alt="Aperçu de la photo">
                     </div>
-                    <img id="image-preview" class="hidden" alt="Image preview">
                     <label for="title">Titre</label>
                     <input type="text" name="title" id="title" required>
                     <label for="category">Catégorie</label>
