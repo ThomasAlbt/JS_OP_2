@@ -78,8 +78,6 @@ const filterProjects = (categoryId = 0) => {
 const clickListener = (categoriesList = []) => {
     document.addEventListener("click", (e) => {
         const target = e.target;
-        const action = target.dataset.action;
-
         const modal = document.getElementById("edition-modal");
 
         if (target === modal) {
@@ -87,9 +85,14 @@ const clickListener = (categoriesList = []) => {
             return;
         }
 
+        const actionTarget = target.closest("[data-action]");
+        if (!actionTarget) return;
+
+        const action = actionTarget.dataset.action;
+
         switch (action) {
             case "filter":
-                filterProjects(target.dataset.categoryId);
+                filterProjects(actionTarget.dataset.categoryId);
                 return;
             case "logout":
                 lougout();
@@ -269,8 +272,8 @@ const renderModalView = (view) => {
     if (view === "upload") {
         modal.innerHTML = `
             <div class="upload-modal">
-                <button type="button" data-action="show-gallery" aria-label="Retour à la galerie"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i></button>
-                <button type="button" data-action="close-modal" aria-label="Fermer"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+                <button type="button" data-action="show-gallery"><i class="fa-solid fa-arrow-left"></i></button>
+                <button type="button" data-action="close-modal"><i class="fa-solid fa-xmark"></i></button>
                 <h3>Ajout photo</h3>
                 <form action="upload" method="post">
                     <label class="upload-file-label" for="image">Photo</label>
